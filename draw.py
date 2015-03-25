@@ -34,6 +34,8 @@ def new_track(diagram, track_name, smalltick=100, largetick=1000):
 def add_to_track(track_features, query, subject, annotation="", feature_color="", forceone=False, sigil="ARROW", label_angle=0):
 	from Bio.Blast.Applications import NcbiblastnCommandline
 
+	subject = check_blast_format(subject)
+
 	if forceone:
 		output = NcbiblastnCommandline(query=query, subject=subject, outfmt=5, task="blastn", num_alignments=1)()[0]
 	else:
@@ -96,16 +98,43 @@ def multitrack(diagram, track_name, query, subject, smalltick=100, largetick=100
 				sigil="ARROW",
 				arrowshaft_height=1)
 
+def draw_digest(track_features, main_record, restriction_list):
+	for site, name, color in restriction_list:
+		index = 0
+		while True:
+			index  = main_record.seq.find(site, start=index)
+			if index == -1 : break
+			feature = SeqFeature(FeatureLocation(index, index+len(site)))
+			track_features.add_feature(feature, color=color, name=name, label=True, label_size=3, label_position="end", label_color=color, label_angle=90)
+			index += len(site)
+
+def check_blast_format(sequence_path):
+	from os.path import splitext
+
+	_ , sequence_format = splitext(sequence_path)
+	if sequence_format == ".gbk" or sequence_format == ".gb" or sequence_format == ".genbank":
+		from write import convert_seq
+		sequence_path = convert_seq(sequence_path, "genbank", "fasta")
+	return sequence_path
 
 def cre(datadir, construct_name):
-	main_record = SeqIO.read(datadir+"aj627603.gbk", 'gb')
+	from os.path import isfile
+
+	main_record_file = datadir+construct_name+".gbk"
+	# main_record_file
+
+	if not isfile(main_record_file):
+		from write import write_seq
+		write_seq(sequence_write_path=datadir, entrez_id=construct_name, formats=["genbank", "fasta"])
+
+	main_record = SeqIO.read(main_record_file, 'gb')
 
 	gdd = GenomeDiagram.Diagram(construct_name+' Construct Diagram', x=0.05, track_size=0.2)
 
 	genbank_track, genbank_features = new_track(gdd, construct_name+" features")
 	for feature in main_record.features:
 		if feature.type != "gene":
-			#Exclude this feature
+			# Exclude this feature
 			continue
 		if len(genbank_features) % 2 == 0:
 			color = colors.thistle
@@ -114,24 +143,17 @@ def cre(datadir, construct_name):
 		genbank_features.add_feature(feature, sigil="ARROW", color=color, label_color=color, label=True, label_size = 14, label_angle=0, arrowshaft_height=1)
 
 	restriction_track, restriction_features = new_track(gdd, construct_name+" restriction sites")
-	for site, name, color in restriction_list:
-		index = 0
-		while True:
-			index  = main_record.seq.find(site, start=index)
-			if index == -1 : break
-			feature = SeqFeature(FeatureLocation(index, index+len(site)))
-			restriction_features.add_feature(feature, color=color, name=name, label=True, label_size=3, label_position="end", label_color=color, label_angle=90)
-			index += len(site)
+	draw_digest(restriction_features, main_record, restriction_list)
 
 	primer_track, primer_features = new_track(gdd, construct_name+" primers")
-	add_to_track(primer_features, datadir+"preliminary_sequencing/primer_fw.fasta", datadir+"aj627603.fasta", annotation="seq_fw_primer", feature_color=colors.green)
-	add_to_track(primer_features, datadir+"cre_fw.fasta", datadir+"aj627603.fasta", annotation="cre_fw_primer", feature_color=colors.red)
-	add_to_track(primer_features, datadir+"cre_rv.fasta", datadir+"aj627603.fasta", annotation="cre_rv_primer", feature_color=colors.red)
+	add_to_track(primer_features, datadir+"preliminary_sequencing/primer_fw.fasta", main_record_file, annotation="seq_fw_primer", feature_color=colors.green)
+	add_to_track(primer_features, datadir+"cre_fw.fasta", main_record_file, annotation="cre_fw_primer", feature_color=colors.red)
+	add_to_track(primer_features, datadir+"cre_rv.fasta", main_record_file, annotation="cre_rv_primer", feature_color=colors.red)
 
 
 	hit_track, hit_features = new_track(gdd, construct_name+" hit alignments")
-	add_to_track(hit_features, datadir+"preliminary_sequencing/hit_fw.fasta", datadir+"aj627603.fasta", annotation="alignement with hit_fw", feature_color=colors.cornflower, sigil="BOX", label_angle=30)
-	add_to_track(hit_features, datadir+"preliminary_sequencing/hit_rv.fasta", datadir+"aj627603.fasta", annotation="alignement with hit_rv", feature_color=colors.salmon, sigil="BOX", label_angle=30)
+	add_to_track(hit_features, datadir+"preliminary_sequencing/hit_fw.fasta", main_record_file, annotation="alignement with hit_fw", feature_color=colors.cornflower, sigil="BOX", label_angle=30)
+	add_to_track(hit_features, datadir+"preliminary_sequencing/hit_rv.fasta", main_record_file, annotation="alignement with hit_rv", feature_color=colors.salmon, sigil="BOX", label_angle=30)
 
 	gdd.draw(format='linear', pagesize="A4", fragments=1, start=0, end=len(main_record))
 	gdd.write("output/"+construct_name+"_diagram.pdf", "PDF")
@@ -179,5 +201,5 @@ if __name__ == '__main__':
 		("GGCGCC","HaeII",colors.cyan),
 		("GGATCC","BamHI",colors.turquoise)
 		]
-	cre(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_name="aj627603")
+	cre(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_name="U80929")
 	my_hit(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_name="my_full_hit")
