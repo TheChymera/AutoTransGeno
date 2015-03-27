@@ -12,9 +12,9 @@ from Bio import SeqIO
 from Bio.Alphabet import generic_dna
 from reportlab.lib import colors
 
-def new_track(diagram, track_name, smalltick=100, largetick=1000):
+def new_track(diagram, track_name, smalltick=100, largetick=1000, track_no=1, endpoint=0):
 	construct_track = diagram.new_track(
-						1,
+						track_no,
 						name=track_name,
 						greytrack=True,
 						scale=True,
@@ -27,7 +27,9 @@ def new_track(diagram, track_name, smalltick=100, largetick=1000):
 						scale_largeticks=0.4,
 						scale_smallticks=0.2,
 						axis_labels=True,
-						greytrack_labels=1)
+						greytrack_labels=1,
+						start=0,
+						end=endpoint)
 	track_features = construct_track.new_set()
 	return construct_track, track_features
 
@@ -133,8 +135,8 @@ def cre(datadir, construct_name):
 
 	genbank_track, genbank_features = new_track(gdd, construct_name+" features")
 	for feature in main_record.features:
-		if feature.type != "gene":
-			# Exclude this feature
+		if feature.type != "gene" and feature.type != "regulatory":
+			# Exclude nongene features
 			continue
 		if len(genbank_features) % 2 == 0:
 			color = colors.thistle
@@ -149,7 +151,6 @@ def cre(datadir, construct_name):
 	add_to_track(primer_features, datadir+"preliminary_sequencing/primer_fw.fasta", main_record_file, annotation="seq_fw_primer", feature_color=colors.green)
 	add_to_track(primer_features, datadir+"cre_fw.fasta", main_record_file, annotation="cre_fw_primer", feature_color=colors.red)
 	add_to_track(primer_features, datadir+"cre_rv.fasta", main_record_file, annotation="cre_rv_primer", feature_color=colors.red)
-
 
 	hit_track, hit_features = new_track(gdd, construct_name+" hit alignments")
 	add_to_track(hit_features, datadir+"preliminary_sequencing/hit_fw.fasta", main_record_file, annotation="alignement with hit_fw", feature_color=colors.cornflower, sigil="BOX", label_angle=30)
@@ -184,22 +185,49 @@ def my_hit(datadir, construct_name):
 			restriction_features.add_feature(feature, color=color, name=name, label=True, label_size=5, label_position="end", label_color=color, label_angle=90)
 			index += len(site)
 
-	gdd.draw(format='linear', pagesize="A4", fragments=1, start=1, end=len(main_record))
+	gdd.draw(format='linear', pagesize="A4", fragments=1, start=0, end=len(main_record))
 	gdd.write("output/"+construct_name+"_diagram.pdf", "PDF")
+
+def construct_on_templates(datadir, construct_name, templates):
+	from os.path import isfile
+
+	main_record_file = datadir+construct_name+".gbk"
+	template_files = [datadir+"{0}.gbk".format(i) for i in templates]
+
+	for entry in [construct_name]+templates:
+		if not isfile(datadir+entry+".gbk"):
+			from write import write_seq
+			write_seq(sequence_write_path=datadir, entrez_id=entry, formats=["genbank", "fasta"])
+
+	gdd = GenomeDiagram.Diagram(construct_name+' Hits on Templates', x=0.05, track_size=0.2)
+
+	i = 0
+	max_len=0
+	for template_file, template in zip(template_files, templates):
+		template_record = SeqIO.read(template_file, "gb")
+		max_len = max(max_len, len(template_record))
+		template_track, template_features = new_track(gdd, construct_name+" primers", track_no=1, endpoint=len(template_record))
+		add_to_track(template_features, main_record_file, template_file, annotation=construct_name, feature_color=colors.deeppink, sigil="BOX")
+		i += 1
+
+	gdd.draw(format='linear', pagesize="A4", fragments=1, start=0, end=max_len)
+	gdd.write("output/"+construct_name+"_template_hits.pdf", "PDF")
 
 if __name__ == '__main__':
 	restriction_list=[
-		("GAATTC","EcoRI",colors.chartreuse),
-		("CCCGGG","SmaI",colors.orange),
-		("GTTAAC","HindI",colors.magenta),
-		("GTCGAC","HindI",colors.purple),
-		("GAATC","HinfI",colors.fuchsia),
-		("GATTC","HinfI",colors.fuchsia),
-		("GAGTC","HinfI",colors.fuchsia),
-		("GACTC","HinfI",colors.fuchsia),
-		("AGCGCT","HaeII",colors.cyan),
-		("GGCGCC","HaeII",colors.cyan),
+		# ("GAATTC","EcoRI",colors.chartreuse),
+		# ("CCCGGG","SmaI",colors.orange),
+		# ("GTTAAC","HindI",colors.magenta),
+		# ("GTCGAC","HindI",colors.purple),
+		# ("GAATC","HinfI",colors.fuchsia),
+		# ("GATTC","HinfI",colors.fuchsia),
+		# ("GAGTC","HinfI",colors.fuchsia),
+		# ("GACTC","HinfI",colors.fuchsia),
+		# ("AGCGCT","HaeII",colors.cyan),
+		# ("GGCGCC","HaeII",colors.cyan),
+		("GGCGCGCC","AscI",colors.deeppink),
 		("GGATCC","BamHI",colors.turquoise)
 		]
 	cre(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_name="U80929")
 	my_hit(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_name="my_full_hit")
+	construct_on_templates(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_name="HC686459", templates=["JC731547", "FJ493255", "JC731554"])
