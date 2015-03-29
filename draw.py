@@ -80,43 +80,6 @@ def add_to_track(track_features, query, subject, annotation="", feature_color=""
 				sigil=sigil,
 				arrowshaft_height=1)
 
-def multitrack(diagram, track_name, query, subject, smalltick=100, largetick=1000, annotation="", feature_color=""):
-	from Bio.Blast.Applications import NcbiblastnCommandline
-
-	output = NcbiblastnCommandline(query=query, subject=subject, outfmt=5, task="blastn")()[0]
-	blast_result_record = NCBIXML.read(StringIO(output))
-
-	for alignment in blast_result_record.alignments:
-		for hsp in alignment.hsps:
-			if hsp.sbjct_start > hsp.sbjct_end:
-				strand = -1
-			else:
-				strand = +1
-			construct_track = diagram.new_track(
-								1,
-								name=track_name,
-								greytrack=True,
-								scale=True,
-								scale_format="SInt",
-								scale_smalltick_interval=smalltick,
-								scale_largetick_interval=largetick,
-								scale_fontsize=3,
-								scale_ticks=True,
-								scale_color=colors.black,
-								scale_largeticks=0.4,
-								scale_smallticks=0.2,
-								axis_labels=True,
-								greytrack_labels=1)
-			track_features = construct_track.new_set()
-			feature = SeqFeature(FeatureLocation(hsp.sbjct_start, hsp.sbjct_end), strand=strand)
-			track_features.add_feature(feature,
-				name=annotation+" ("+str(hsp.identities)+"/"+str(hsp.align_length)+")",
-				label=True, color=feature_color,
-				label_color=feature_color,
-				label_angle=0,
-				sigil="ARROW",
-				arrowshaft_height=1)
-
 def draw_digest(track_features, main_record, restriction_list):
 	for site, name, color in restriction_list:
 		index = 0
@@ -179,9 +142,6 @@ def cre(datadir, construct_name):
 def my_hit(datadir, construct_name):
 	main_record = SeqIO.read(datadir+"preliminary_sequencing/hit_full.fasta", 'fasta')
 	gdd = GenomeDiagram.Diagram(construct_name+' Construct Diagram', x=0.05, track_size=0.2)
-
-	# multitrack(gdd, construct_name, datadir+"preliminary_sequencing/hit_fw.fasta", datadir+"preliminary_sequencing/hit_full.fasta", annotation="hit_fw", feature_color=colors.cornflower)
-	# multitrack(gdd, construct_name, datadir+"preliminary_sequencing/hit_rv.fasta", datadir+"preliminary_sequencing/hit_full.fasta", annotation="ht_rv", feature_color=colors.salmon)
 
 	hit_fw_track, hit_fw_features = new_track(gdd, construct_name+" forward hit", smalltick=10, largetick=100)
 	add_to_track(hit_fw_features, datadir+"preliminary_sequencing/hit_fw.fasta", datadir+"preliminary_sequencing/hit_full.fasta", annotation="hit_fw", feature_color=colors.cornflower, forceone=True, sigil="BOX")
