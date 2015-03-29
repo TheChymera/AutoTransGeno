@@ -24,7 +24,6 @@ def write_seq(sequence_write_path=".cache/", entrez_id="", sequence="", sequence
 		if "genbank" in formats:
 			destination = sequence_write_path+entrez_id+".gbk"
 			SeqIO.write(record, destination, "genbank")
-			print(destination)
 
 	if sequence:
 		from Bio.Seq import Seq
