@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-__author__ = 'Horea Christian'
+__author__ = "Horea Christian"
 
 import pickle
 from Bio import Entrez
