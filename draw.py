@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+__author__ = "Horea Christian"
 
 import numpy as np
 from Bio.Blast.Applications import NcbiblastnCommandline
@@ -12,7 +13,9 @@ from Bio import SeqIO
 from Bio.Alphabet import generic_dna
 from reportlab.lib import colors
 
-def new_track(diagram, track_name, smalltick=100, largetick=1000, track_no=1, endpoint=0):
+def new_track(diagram, track_name, smalltick=100, largetick="", track_no=1, endpoint=0):
+	if not largetick:
+		largetick=10*smalltick
 	if endpoint != 0:
 		construct_track = diagram.new_track(
 							track_no,
@@ -90,6 +93,25 @@ def draw_digest(track_features, main_record, restriction_list):
 			track_features.add_feature(feature, color=color, name=name, label=True, label_size=3, label_position="end", label_color=color, label_angle=90)
 			index += len(site)
 
+def draw_digest1(track_features, restriction_dict, restriction_colors=""):
+	from itertools import cycle
+
+	if not restriction_colors:
+		restriction_colors=[
+			colors.chartreuse,
+			colors.deeppink,
+			colors.turquoise,
+			colors.fuchsia
+		]
+
+	restriction_colors = cycle(restriction_colors)
+	for enzyme, sites in restriction_dict.iteritems():
+		current_color = restriction_colors.next()
+		for site in sites:
+			feature = SeqFeature(FeatureLocation(site, site+2))
+			track_features.add_feature(feature, color=current_color, name=enzyme.__name__, label=True, label_size=3, label_position="end", label_color=current_color, label_angle=90)
+
+
 def check_blast_format(sequence_path):
 	from os.path import splitext
 
@@ -133,10 +155,10 @@ def cre(datadir, construct_name):
 	add_to_track(primer_features, datadir+"cre_rv.fasta", main_record_file, annotation="cre_rv_primer", feature_color=colors.red)
 
 	hit_track, hit_features = new_track(gdd, construct_name+" hit alignments")
-	add_to_track(hit_features, datadir+"preliminary_sequencing/hit_fw.fasta", main_record_file, annotation="alignement with hit_fw", feature_color=colors.cornflower, sigil="BOX", label_angle=30)
-	add_to_track(hit_features, datadir+"preliminary_sequencing/hit_rv.fasta", main_record_file, annotation="alignement with hit_rv", feature_color=colors.salmon, sigil="BOX", label_angle=30)
+	add_to_track(hit_features, datadir+"cre_f1.fasta", main_record_file, annotation="cre_f1", feature_color=colors.cornflower, sigil="BOX", label_angle=30)
+	add_to_track(hit_features, datadir+"cre_r1.fasta", main_record_file, annotation="cre_r1", feature_color=colors.salmon, sigil="BOX", label_angle=30)
 
-	gdd.draw(format='linear', pagesize="A4", fragments=1, start=0, end=len(main_record))
+	gdd.draw(format="linear", pagesize="A4", fragments=1, start=0, end=len(main_record))
 	gdd.write("output/"+construct_name+"_diagram.pdf", "PDF")
 
 def my_hit(datadir, construct_name):
@@ -201,8 +223,17 @@ def construct_on_templates(datadir, construct_names, templates, construct_is_fil
 		template_record = SeqIO.read(template_file, "gb")
 		max_len = max(max_len, len(template_record))
 		template_track, template_features = new_track(gdd, ", ".join(map(str, construct_names))+" on "+template, track_no=1, endpoint=len(template_record))
+		for feature in template_record.features:
+			if feature.type != "gene" and feature.type != "regulatory":
+				# Exclude nongene features
+				continue
+			if len(template_features) % 2 == 0:
+				color = colors.thistle
+			else:
+				color = colors.lightblue
+			template_features.add_feature(feature, sigil="ARROW", color=color, label_color=color, label=True, label_size = 14, label_angle=0, arrowshaft_height=1)
 		for construct_name, construct_file in zip(construct_names, construct_files):
-			add_to_track(template_features, construct_file, template_file, annotation=construct_name, feature_color=colors.deeppink, sigil="BOX")
+			add_to_track(template_features, construct_file, template_file, annotation=construct_name, feature_color=colors.deeppink, sigil="BOX", label_angle=60)
 		i += 1
 
 	gdd.draw(format='linear', pagesize="A4", fragments=1, start=0, end=max_len)
@@ -224,6 +255,6 @@ if __name__ == '__main__':
 		("GGCGCGCC","AscI",colors.deeppink),
 		("GGATCC","BamHI",colors.turquoise)
 		]
-	# cre(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_name="U80929")
+	cre(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_name="aj627603")
 	# my_hit(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_name="my_full_hit")
-	construct_on_templates(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_names=["cre_fw.fasta", "cre_rv.fasta"], templates=["AF298785", "AF298789", "aj627603"], construct_is_file=True)
+	construct_on_templates(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_names=["cre_f1.fasta", "cre_r1.fasta", "cre_fw2.fasta"], templates=["AF298785", "AF298789", "aj627603"], construct_is_file=True)
