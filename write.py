@@ -9,6 +9,11 @@ format_extensions = {
 }
 
 def write_seq(sequence_write_path=".cache/", entrez_id="", sequence="", sequence_id="", formats=["fasta"]):
+	# CAREFUL! in case of multiple exports will only return the last exported (genbank) destination!
+
+	if type(sequence) is not str:
+		sequence = str(sequence.seq)
+
 
 	if sequence and not sequence_id:
 		raise Exception("Please specify an ID for your sequence (whatever string you choose)")
