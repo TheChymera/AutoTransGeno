@@ -10,6 +10,18 @@ def check_fetch_record(data_dir, construct_name, formats=["genbank"]):
 			write_seq(sequence_write_path=datadir, entrez_id=construct_name, formats=["genbank"])
 	return main_record_file
 
+def overhangs(enzyme):
+	from Bio.Restriction import *
+
+	if "?" in enzyme.elucidate() or "cut twice, not yet implemented sorry" in enzyme.elucidate():
+		return("!!!NON-FATAL ERROR: UNDETERMINED OVERHANGS")
+	else:
+		split_5 = enzyme.elucidate().split("^")
+		if "_" in split_5[0]:
+			overhang = split_5[0].split("_")[1]
+		elif "_" in split_5[1]:
+			overhang = split_5[1].split("_")[0]
+		return overhang
 
 def extract_feature(sequence_id, data_dir, feature_names, write_file=False):
 	# CAREFUL! only returns last detected sequence!
