@@ -25,7 +25,7 @@ def cre(datadir, feature_name, extract_from):
 			color = colors.grey
 		genbank_features.add_feature(feature, sigil="ARROW", color=color, label_color=color, label=True, label_size = 14, label_angle=0, arrowshaft_height=1)
 
-	restriction_dict = enzyme_selector(sequence=main_record, restriction_interval=[0,690], genome_frequency=[750,2000], deterministic_overhangs=False)
+	restriction_dict = enzyme_selector(sequence=main_record, restriction_interval=[0,690], genome_frequency=[700,2000], deterministic_overhangs=True)
 	restriction_track, restriction_features = new_track(gdd, construct_name+" restriction sites", smalltick=10)
 	draw_digest1(restriction_features, restriction_dict)
 
@@ -44,9 +44,8 @@ def cre(datadir, feature_name, extract_from):
 	gdd.draw(format="linear", pagesize="A4", fragments=1, start=0, end=len(main_record))
 	gdd.write("output/"+construct_name+"_from_"+extract_from+".pdf", "PDF")
 
-
 	return restriction_dict
 if __name__ == '__main__':
 	restriction_dict = cre(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", feature_name=["cre", "Cre", "CRE"], extract_from="aj627603")
 	for key in restriction_dict:
-		print key.elucidate(), key.fst5, key.fst3, key.characteristic()
+		print key.elucidate(), key.__name__
