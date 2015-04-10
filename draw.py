@@ -95,6 +95,7 @@ def draw_digest(track_features, main_record, restriction_list):
 
 def draw_digest1(track_features, restriction_dict, restriction_colors=""):
 	from itertools import cycle
+	from sequence_utils import overhangs
 
 	if not restriction_colors:
 		restriction_colors=[
@@ -107,8 +108,9 @@ def draw_digest1(track_features, restriction_dict, restriction_colors=""):
 	restriction_colors = cycle(restriction_colors)
 	for enzyme, sites in restriction_dict.iteritems():
 		current_color = restriction_colors.next()
+		overhang_length = len(overhangs(enzyme))
 		for site in sites:
-			feature = SeqFeature(FeatureLocation(site, site+2))
+			feature = SeqFeature(FeatureLocation(site, site+overhang_length))
 			track_features.add_feature(feature, color=current_color, name=enzyme.__name__, label=True, label_size=3, label_position="end", label_color=current_color, label_angle=90)
 
 
