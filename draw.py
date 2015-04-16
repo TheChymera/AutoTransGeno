@@ -83,9 +83,12 @@ def add_to_track(track_features, query, subject, annotation="", feature_color=""
 				sigil=sigil,
 				arrowshaft_height=1)
 
-def draw_digest(track_features, restriction_dict, restriction_colors=""):
+def draw_digest(track_features, restriction_dict, restriction_colors="", rotate_labels=False):
 	from itertools import cycle
 	from sequence_utils import overhangs
+
+	#the labels are too close to the track to properly display multiple rotated instances pointing at the same position, this gets prepended:
+	name_spacer="      "
 
 	if not restriction_colors:
 		restriction_colors=[
@@ -98,11 +101,15 @@ def draw_digest(track_features, restriction_dict, restriction_colors=""):
 		]
 
 	restriction_colors = cycle(restriction_colors)
-	angle = cycle([120,90,60,30])
+	if rotate_labels:
+		angle = cycle([120,90,60,30])
 	for enzyme, sites in restriction_dict.iteritems():
 		current_color = restriction_colors.next()
-		current_angle=angle.next()
+		if rotate_labels:
+			current_angle=angle.next()
+		else:
+			angle = 90
 		overhang_length = len(overhangs(enzyme))
 		for site in sites:
 			feature = SeqFeature(FeatureLocation(site, site+overhang_length))
-			track_features.add_feature(feature, color=current_color, name="      "+enzyme.__name__, label=True, label_size=3, label_position="end", label_color=current_color, label_angle=current_angle)
+			track_features.add_feature(feature, color=current_color, name=name_spacer+enzyme.__name__, label=True, label_size=3, label_position="end", label_color=current_color, label_angle=current_angle)
