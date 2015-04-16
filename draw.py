@@ -108,16 +108,6 @@ def draw_digest(track_features, restriction_dict, restriction_colors=""):
 			feature = SeqFeature(FeatureLocation(site, site+overhang_length))
 			track_features.add_feature(feature, color=current_color, name="      "+enzyme.__name__, label=True, label_size=3, label_position="end", label_color=current_color, label_angle=current_angle)
 
-
-def check_blast_format(sequence_path):
-	from os.path import splitext
-
-	_ , sequence_format = splitext(sequence_path)
-	if sequence_format == ".gbk" or sequence_format == ".gb" or sequence_format == ".genbank":
-		from write import convert_seq
-		sequence_path = convert_seq(sequence_path, "genbank", "fasta")
-	return sequence_path
-
 def my_hit(datadir, template_name):
 	main_record = SeqIO.read(datadir+"preliminary_sequencing/hit_full.fasta", 'fasta')
 	gdd = GenomeDiagram.Diagram(construct_name+' Construct Diagram', x=0.05, track_size=0.2)
@@ -187,21 +177,5 @@ def construct_on_templates(datadir, construct_names, templates, construct_is_fil
 	gdd.write("output/"+"_".join(map(str, construct_names))+"_template_hits.pdf", "PDF")
 
 if __name__ == '__main__':
-	restriction_list=[
-		# ("GAATTC","EcoRI",colors.chartreuse),
-		# ("CCCGGG","SmaI",colors.orange),
-		# ("GTTAAC","HindI",colors.magenta),
-		# ("GTCGAC","HindI",colors.purple),
-		# ("GAATC","HinfI",colors.fuchsia),
-		# ("GATTC","HinfI",colors.fuchsia),
-		# ("GAGTC","HinfI",colors.fuchsia),
-		# ("GACTC","HinfI",colors.fuchsia),
-		# ("AGCGCT","HaeII",colors.cyan),
-		# ("GGCGCC","HaeII",colors.cyan),
-		("CGGCCG","EagI",colors.chartreuse),
-		("GGCGCGCC","AscI",colors.deeppink),
-		("GGATCC","BamHI",colors.turquoise)
-		]
-	cre(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_name="aj627603")
 	# my_hit(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_name="my_full_hit")
 	construct_on_templates(datadir="/home/chymera/data/CreBLseq/Cre_aj627603/", construct_names=["cre_f1.fasta", "cre_r1.fasta", "cre_fw2.fasta"], templates=["AF298785", "AF298789", "aj627603"], construct_is_file=True)
