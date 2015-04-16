@@ -83,17 +83,7 @@ def add_to_track(track_features, query, subject, annotation="", feature_color=""
 				sigil=sigil,
 				arrowshaft_height=1)
 
-def draw_digest(track_features, main_record, restriction_list):
-	for site, name, color in restriction_list:
-		index = 0
-		while True:
-			index  = main_record.seq.find(site, start=index)
-			if index == -1 : break
-			feature = SeqFeature(FeatureLocation(index, index+len(site)))
-			track_features.add_feature(feature, color=color, name=name, label=True, label_size=3, label_position="end", label_color=color, label_angle=90)
-			index += len(site)
-
-def draw_digest1(track_features, restriction_dict, restriction_colors=""):
+def draw_digest(track_features, restriction_dict, restriction_colors=""):
 	from itertools import cycle
 	from sequence_utils import overhangs
 
@@ -127,7 +117,7 @@ def check_blast_format(sequence_path):
 		sequence_path = convert_seq(sequence_path, "genbank", "fasta")
 	return sequence_path
 
-def my_hit(datadir, construct_name):
+def my_hit(datadir, template_name):
 	main_record = SeqIO.read(datadir+"preliminary_sequencing/hit_full.fasta", 'fasta')
 	gdd = GenomeDiagram.Diagram(construct_name+' Construct Diagram', x=0.05, track_size=0.2)
 
@@ -139,16 +129,6 @@ def my_hit(datadir, construct_name):
 
 	primer_track, primer_features = new_track(gdd, construct_name+" primers", smalltick=10, largetick=100)
 	add_to_track(primer_features, datadir+"preliminary_sequencing/primer_fw.fasta", datadir+"preliminary_sequencing/hit_full.fasta", annotation="seq_fw_primer", feature_color=colors.green)
-
-	restriction_track, restriction_features = new_track(gdd, construct_name+" restriction sites", smalltick=10, largetick=100)
-	for site, name, color in restriction_list:
-		index = 0
-		while True:
-			index  = main_record.seq.find(site, start=index)
-			if index == -1 : break
-			feature = SeqFeature(FeatureLocation(index, index+len(site)))
-			restriction_features.add_feature(feature, color=color, name=name, label=True, label_size=5, label_position="end", label_color=color, label_angle=90)
-			index += len(site)
 
 	gdd.draw(format='linear', pagesize="A4", fragments=1, start=0, end=len(main_record))
 	gdd.write("output/"+construct_name+"_diagram.pdf", "PDF")
