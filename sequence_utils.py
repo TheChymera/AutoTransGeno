@@ -10,15 +10,6 @@ def check_fetch_record(data_dir, construct_name, formats=["genbank"]):
 			write_seq(sequence_write_path=datadir, entrez_id=construct_name, formats=["genbank"])
 	return main_record_file
 
-def check_blast_format(sequence_path):
-	from os.path import splitext
-
-	_ , sequence_format = splitext(sequence_path)
-	if sequence_format == ".gbk" or sequence_format == ".gb" or sequence_format == ".genbank":
-		from write import convert_seq
-		sequence_path = convert_seq(sequence_path, "genbank", "fasta")
-	return sequence_path
-
 def overhangs(enzyme):
 	from Bio.Restriction import *
 
