@@ -7,7 +7,7 @@ def check_fetch_record(data_dir, construct_name, formats=["genbank"]):
 
 		if not isfile(main_record_file):
 			from write import write_seq
-			write_seq(sequence_write_path=datadir, entrez_id=construct_name, formats=["genbank"])
+			write_seq(sequence_write_path=data_dir, entrez_id=construct_name, formats=["genbank"])
 	return main_record_file
 
 def overhangs(enzyme):
