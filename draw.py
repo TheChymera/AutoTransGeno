@@ -108,7 +108,7 @@ def draw_digest(track_features, restriction_dict, restriction_colors="", rotate_
 		if rotate_labels:
 			current_angle=angle.next()
 		else:
-			angle = 90
+			current_angle = 90
 		overhang_length = len(overhangs(enzyme))
 		for site in sites:
 			feature = SeqFeature(FeatureLocation(site, site+overhang_length))
