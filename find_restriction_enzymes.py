@@ -26,6 +26,6 @@ def enzyme_selector(sequence, restriction_interval, genome_frequency=False, dete
 if __name__ == '__main__':
 	from sequence_utils import extract_feature
 
-	sequence,_ = extract_feature(sequence_id="AJ627603", data_dir="/home/chymera/data2/gt.ep/sequences", feature_names=["Cre", "cre", "CRE"])
+	sequence,_ = extract_feature(sequence_id="AJ627603", data_dir="/home/chymera/data2/gt.ep/sequences/", feature_names=["Cre", "cre", "CRE"])
 	outp = enzyme_selector(sequence=sequence, restriction_interval=[0,690], genome_frequency=[700,2000], deterministic_overhangs=True)
 	print outp
