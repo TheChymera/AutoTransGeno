@@ -4,7 +4,7 @@ from Bio.Blast.Applications import NcbiblastnCommandline
 from Bio.Seq import Seq
 from Bio.Blast import NCBIXML
 from StringIO import StringIO
-from write import write_seq
+from write import write_seq, check_format
 import itertools
 from Bio import SeqIO
 import os
@@ -34,13 +34,12 @@ def mock_pcr(template, primer_files="", primer_seqs="", primer_directory="", max
 
 	#convert template format if necessary, if template not formatte a path write chached file for seuence
 	if "." in template:
-		template_list = [check_format(template, "fasta")]
+		template = check_format(template, "fasta")
 	elif type(template) == str:
 		dest = write_seq(sequence=template, sequence_id="template")
-		templat_list = [dest]
+		template = dest
 	elif "/" in template:
 		os.listdir(template)
-
 
 	#writes sequences to files
 	if primer_seqs:
@@ -49,39 +48,46 @@ def mock_pcr(template, primer_files="", primer_seqs="", primer_directory="", max
 				dest = write_seq(sequence=primer_seq, sequence_id="primer"+str(ix))
 				primer_files += [dest]
 
-	print primer_files
+	fw_primer_start_positions=[]
+	rv_primer_start_positions=[]
+	template_seq = SeqIO.read(template, "fasta")
+	for primer_file in primer_files:
+		output = NcbiblastnCommandline(query=template, subject=primer_file, outfmt=5, evalue=0.1, task="blastn")()[0]
+		blast_result_record = NCBIXML.read(StringIO(output))
 
-	for template in template_list:
-		fw_primer_start_positions=[]
-		rv_primer_start_positions=[]
-		template_seq = SeqIO.read(template, "fasta")
-		for primer_file in primer_files:
-			output = NcbiblastnCommandline(query=template, subject=primer_file, outfmt=5, task="blastn")()[0]
-			blast_result_record = NCBIXML.read(StringIO(output))
+		for alignment in blast_result_record.alignments:
+			hsp_list=alignment.hsps
+			for hsp in hsp_list:
+				# print "hsp infos:", hsp.sbjct_start, hsp.sbjct_end, hsp.query_start, hsp.query_end, hsp.align_length, hsp.sbjct
+				if hsp.sbjct_start > hsp.sbjct_end:
+					strand = -1
+					amplicon_5_end = hsp.query_end
+					rv_primer_start_positions += [hsp.query_end]
+				else:
+					strand = +1
+					amplicon_5_end = hsp.query_start
+					fw_primer_start_positions += [hsp.query_start]
 
-			for alignment in blast_result_record.alignments:
-				hsp_list=alignment.hsps
-				for hsp in hsp_list:
-					print "muie:", hsp.sbjct_start, hsp.sbjct_end, hsp.query_start, hsp.query_end, hsp.align_length, hsp.sbjct
-					if hsp.sbjct_start > hsp.sbjct_end:
-						strand = -1
-						amplicon_5_end = hsp.query_end
-						rv_primer_start_positions += [hsp.query_end]
-					else:
-						strand = +1
-						amplicon_5_end = hsp.query_start
-						fw_primer_start_positions += [hsp.query_start]
-
-		for fw_primer_start in fw_primer_start_positions:
-			for rv_primer_start in rv_primer_start_positions:
-				amplicon_length = rv_primer_start - fw_primer_start
-				if amplicon_length <= max_length:
-					return amplicon_length, template_seq[fw_primer_start:rv_primer_start].seq
+	for fw_primer_start in fw_primer_start_positions:
+		for rv_primer_start in rv_primer_start_positions:
+			amplicon_length = rv_primer_start - fw_primer_start
+			if amplicon_length <= max_length and amplicon_length >= 0:
+				return amplicon_length, template_seq[fw_primer_start:rv_primer_start].seq
 
 
-def genome_mock_pcr(genome_path, unspecific_insert, primer_files="", primer_seqs="", primer_directory="", max_length=3000):
+def genome_mock_pcr(genome_path, unspecific_insert=False, primer_files="", primer_seqs="", primer_directory="", max_length=3000):
+	amplicons = []
+	for fasta_file in os.listdir(genome_path):
+		_, extension = os.path.splitext(fasta_file)
+		if extension == ".fa":
+			amplicons += [mock_pcr(genome_path+fasta_file, primer_files=primer_files, primer_seqs=primer_seqs, primer_directory=primer_directory, max_length=max_length)]
+			print(fasta_file)
+	if unspecific_insert:
+		amplicons += [mock_pcr(unspecific_insert, primer_files=primer_files, primer_seqs=primer_seqs, primer_directory=primer_directory, max_length=max_length)]
 
+	return amplicons
 
 if __name__ == '__main__':
 	template = "AAAAAAAAAAAAAAAGGGGGGCCCCCCCCAAAAAAAAAAAAGAGGTGCATACCTTTGCGCATCATCTCCCAGGCTTGGGCTTCCTTTAGGGTAACTGGCCGCCGCCATGTTGCAAACGGGAAGGAAATGAATGAACCGCCGTTATGAAATCTTGCTTAGGCCTTCCTTCTTCCTAGCTTGTGACTAACCTCATTCCTCTCGGCTGGGTGGAGTGTCCTTTATCCTGTAGGCCAGGTGATGCAAAGCACGGAAGCCGGCGAGAGTTCTACCTCACAATCTGTCTCACCTTATTAGCCTTAAAAGCCCTTGAGCCTTATTGTCCTCGGGCATAATGCGTATTCTAGATTATTCTCTGAAAATCAAAGCGGACTTACAGAGGTCCGCTTGACCTCCCAACCCCAGAGGTAGTTATGGCGTAGTGCAGAGCCGTGGGATGGGGAGCTGAGTCATGGTGGTTCTGAAAAGAAATTTTCCACCACAAAATGGCTCCTGTAGTAGCAGCCCCTTCCATCCCCTGCACTTCCCATCACAGCCTCGCACTGACCCAGGCCCTATAGGCCAGGATGTAAAGGTCATTAAGAGGATTGGGTGTCCCTGCGCCTCAGAATCCTGCCCTTCTCCCCGTTCCATCCTCCAGAAACCAGATCTCTCCACTCCGCCCTGATCTGAGGTTAAATTTAGCAGCACGGAAGCCGGCCGTGTGACCTTTCTGGATCTGGGGTCTGAGCGGGCTCTCCACCCTGCTCCCCCTACACACATCTGGGAAATCCCATTGACTTGCTCCGGCTCTCATTTTTGCCCGAGAAGAACAGGTGTTTCGCGAACGAGCCCTGGGATTAGGGTCGTGCCTTCGGCCGTTGGAAACCCCCCACATGTTTTCTCAGTCTTTCCCCTTAGTTCGAGGGACTTGGAGGACACAGGTGGGCCCGCCCTGTGCTGCTCACGCTGACCTTTAGCCTTGCCCTTTGAGCTTGCTGATGAATGAGTTCACAGGTCTGCCCTGTCCAGGGGGTGTAGCCTGAAGTCCAGCCATGCTGGAACAAACTTCCCAGGGCATGAGTGAT"
-	mock_pcr(template, primer_seqs=["CCTTTAGGGTAACTG", "GCCGGCTTCCGTGCT"])
+	# print mock_pcr("/home/chymera/genbank/genomes/Eukaryotes/vertebrates_mammals/Mus_musculus/GRCm38.p3/Primary_Assembly/assembled_chromosomes/FASTA/chr6.fa", primer_seqs=["TAAACAGGCCCACTTGAAGG", "CACACCCATCACAAACATGG"], max_length=1000)
+	print genome_mock_pcr("/home/chymera/genbank/genomes/Eukaryotes/vertebrates_mammals/Mus_musculus/GRCm38.p3/Primary_Assembly/assembled_chromosomes/FASTA/", primer_seqs=["TAAACAGGCCCACTTGAAGG", "CACACCCATCACAAACATGG"], max_length=1000)
