@@ -23,6 +23,17 @@ def overhangs(enzyme):
 			overhang = split_5[1].split("_")[0]
 		return overhang
 
+def standard_template(template):
+	from write import check_format, write_seq
+	if "." in template:
+		template = check_format(template, "fasta")
+	elif type(template) == str:
+		dest = write_seq(sequence=template, sequence_id="template")
+		template = dest
+	else:
+		raise Exception("Pleae check your specified `template` value.")
+	return template
+
 def extract_feature(sequence_id, data_dir, feature_names, write_file=False):
 	# CAREFUL! only returns last detected sequence!
 
