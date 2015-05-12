@@ -27,8 +27,8 @@ def check_format(sequence_path, format):
 def write_seq(sequence_write_path=".cache/", entrez_id="", sequence="", sequence_id="", formats=["fasta"]):
 	# CAREFUL! in case of multiple exports will only return the last exported (genbank) destination!
 
-	if type(sequence) is not str:
-		sequence = str(sequence.seq)
+	# elif isinstance(sequence, SeqRecord.SeqRecord):
+	# 	sequence = sequence.seq
 
 	if sequence and not sequence_id:
 		raise Exception("Please specify an ID for your sequence (whatever string you choose)")
@@ -49,7 +49,11 @@ def write_seq(sequence_write_path=".cache/", entrez_id="", sequence="", sequence
 		from Bio.Seq import Seq
 		from Bio.Alphabet import generic_dna
 		from Bio.SeqRecord import SeqRecord
-		record=SeqRecord(Seq(sequence, generic_dna), id=sequence_id)
+
+		if isinstance(sequence, str):
+			sequence = Seq(sequence, generic_dna)
+
+		record=SeqRecord(sequence, id=sequence_id)
 		if "fasta" in formats:
 			destination = sequence_write_path+sequence_id+".fasta"
 			SeqIO.write(record, destination, "fasta")
