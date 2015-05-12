@@ -4,7 +4,8 @@ from Bio.Blast.Applications import NcbiblastnCommandline
 from Bio.Seq import Seq
 from Bio.Blast import NCBIXML
 from StringIO import StringIO
-from write import write_seq, check_format
+from write import check_format
+from sequence_utils import standard_template
 import itertools
 from Bio import SeqIO
 import os
@@ -33,13 +34,7 @@ def mock_pcr(template, primer_files="", primer_seqs="", primer_directory="", max
 		primer_files=[]
 
 	#convert template format if necessary, if template not formatte a path write chached file for seuence
-	if "." in template:
-		template = check_format(template, "fasta")
-	elif type(template) == str:
-		dest = write_seq(sequence=template, sequence_id="template")
-		template = dest
-	elif "/" in template:
-		os.listdir(template)
+	template = standard_template(template)
 
 	#writes sequences to files
 	if primer_seqs:
