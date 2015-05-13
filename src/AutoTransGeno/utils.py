@@ -1,6 +1,7 @@
+__author__ = 'Horea Christian'
+
 from Bio import SeqIO
 from os.path import isfile
-__author__ = 'Horea Christian'
 
 format_extensions = {
 	"genbank": [".gbk", ".gb", ".genbank"],

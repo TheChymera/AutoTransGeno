@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+__author__ = "Horea Christian"
+
 from Bio import Restriction, SeqRecord
 from Bio.Seq import Seq
 from StringIO import StringIO

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+__author__ = "Horea Christian"
 
 from Bio.Blast.Applications import NcbiblastnCommandline
 from Bio.Seq import Seq

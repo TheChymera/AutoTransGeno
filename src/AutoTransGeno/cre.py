@@ -1,3 +1,5 @@
+__author__ = "Horea Christian"
+
 def cre(datadir, feature_name, extract_from):
 	from sequence_utils import extract_feature, check_fetch_record
 	from restriction import enzyme_selector
