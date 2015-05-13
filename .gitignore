@@ -33,6 +33,7 @@ Untitled*.ipynb
 
 # Data traces:
 output/*
+digests/*
 results/*
 */results/
 image-*.pdf
