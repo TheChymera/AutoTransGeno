@@ -5,6 +5,7 @@ __author__ = "Horea Christian"
 from Bio import SeqIO
 from Bio.Emboss.Applications import Primer3Commandline
 from Bio.Seq import Seq
+from utils import write_seq
 
 def find_primers(sequence="", sequence_path="", sequence_id="", output_path="", datadir=""):
 
@@ -12,11 +13,9 @@ def find_primers(sequence="", sequence_path="", sequence_id="", output_path="", 
 		output_path = "output/last_primer_out.pr3"
 
 	if sequence_id and not sequence and not sequence_path:
-		from write import write_seq
 		sequence_path = write_seq(sequence_write_path=datadir, entrez_id=sequence_id, formats=["genbank", "fasta"])
 
 	if sequence:
-		from write import write_seq
 		sequence_path = write_seq(sequence=sequence, sequence_id=sequence_id)
 
 	main_record = SeqIO.read(sequence_path, 'gb')

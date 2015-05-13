@@ -2,7 +2,7 @@
 from Bio import Restriction, SeqRecord
 from Bio.Seq import Seq
 from StringIO import StringIO
-from write import write_seq, check_format
+from utils import write_seq, check_format
 from Bio import SeqIO
 from Bio.SeqUtils import GC
 from Bio import Restriction

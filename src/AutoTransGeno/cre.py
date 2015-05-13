@@ -1,6 +1,6 @@
 def cre(datadir, feature_name, extract_from):
 	from sequence_utils import extract_feature, check_fetch_record
-	from find_restriction_enzymes import enzyme_selector
+	from restriction import enzyme_selector
 	from Bio import SeqIO
 	from Bio.Graphics import GenomeDiagram
 	from draw import new_track, draw_digest, add_to_track

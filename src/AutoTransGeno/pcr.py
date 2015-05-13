@@ -4,7 +4,7 @@ from Bio.Blast.Applications import NcbiblastnCommandline
 from Bio.Seq import Seq
 from Bio.Blast import NCBIXML
 from StringIO import StringIO
-from write import check_format
+from utils import check_format
 from sequence_utils import standard_template
 import itertools
 from Bio import SeqIO

@@ -54,7 +54,7 @@ def new_track(diagram, track_name, smalltick=100, largetick="", track_no=1, endp
 
 def add_to_track(track_features, query, subject, annotation="", feature_color="", forceone=False, sigil="ARROW", label_angle=0):
 	from Bio.Blast.Applications import NcbiblastnCommandline
-	from write import check_format
+	from utils import check_format
 
 	subject = check_format(subject, "fasta")
 
