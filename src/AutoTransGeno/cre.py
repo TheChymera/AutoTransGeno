@@ -1,7 +1,7 @@
 __author__ = "Horea Christian"
 
 def cre(datadir, feature_name, extract_from):
-	from sequence_utils import extract_feature, check_fetch_record
+	from utils import extract_feature, check_fetch_record
 	from restriction import enzyme_selector
 	from Bio import SeqIO
 	from Bio.Graphics import GenomeDiagram
@@ -41,10 +41,16 @@ def cre(datadir, feature_name, extract_from):
 	add_to_track(primer_features, datadir+"cre_r1.fasta", main_record_file, annotation="cre_r1", feature_color=colors.cornflower, label_angle=60)
 	add_to_track(primer_features, datadir+"cre_fw4.fasta", main_record_file, annotation="cre_fw4", feature_color=colors.green, label_angle=60)
 	add_to_track(primer_features, datadir+"cre_rv4.fasta", main_record_file, annotation="cre_rv4", feature_color=colors.green, label_angle=60)
+	add_to_track(primer_features, datadir+"cre_fw5.fasta", main_record_file, annotation="cre_fw5", feature_color=colors.green, label_angle=60)
+	add_to_track(primer_features, datadir+"cre_rv5.fasta", main_record_file, annotation="cre_rv5", feature_color=colors.green, label_angle=60)
+	add_to_track(primer_features, datadir+"cre_fw6.fasta", main_record_file, annotation="cre_fw6", feature_color=colors.green, label_angle=60)
+	add_to_track(primer_features, datadir+"cre_rv6.fasta", main_record_file, annotation="cre_rv6", feature_color=colors.green, label_angle=60)
+	add_to_track(primer_features, datadir+"cre_fw7.fasta", main_record_file, annotation="cre_fw7", feature_color=colors.green, label_angle=60)
+	add_to_track(primer_features, datadir+"cre_rv7.fasta", main_record_file, annotation="cre_rv7", feature_color=colors.green, label_angle=60)
 
 	gdd.draw(format="linear", pagesize="A4", fragments=1, start=0, end=len(main_record))
 	gdd.write("output/"+construct_name+"_from_"+extract_from+".pdf", "PDF")
 
 	return restriction_dict
 if __name__ == '__main__':
-	cre(datadir="/home/chymera/data2/gt.ep/sequences/", feature_name=["cre", "Cre", "CRE"], extract_from="aj627603")
+	cre(datadir="/home/chymera/data/reference/sequences/", feature_name=["cre", "Cre", "CRE"], extract_from="aj627603")
