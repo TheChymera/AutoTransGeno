@@ -49,8 +49,10 @@ def write_seq(sequence_write_path=".cache/", entrez_id="", sequence="", sequence
 
 		if isinstance(sequence, str):
 			sequence = Seq(sequence, generic_dna)
-
-		record=SeqRecord(sequence, id=sequence_id)
+		record=sequence
+		#
+		# record=SeqRecord(sequence, id=sequence_id)
+		# print record, type(record)
 		if "fasta" in formats:
 			destination = sequence_write_path+sequence_id+".fasta"
 			SeqIO.write(record, destination, "fasta")
