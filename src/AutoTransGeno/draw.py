@@ -85,7 +85,7 @@ def add_to_track(track_features, query, subject, annotation="", feature_color=""
 
 def draw_digest(track_features, restriction_dict, restriction_colors="", rotate_labels=False):
 	from itertools import cycle
-	from sequence_utils import overhangs
+	from utils import overhangs
 
 	#the labels are too close to the track to properly display multiple rotated instances pointing at the same position, this gets prepended:
 	name_spacer="      "

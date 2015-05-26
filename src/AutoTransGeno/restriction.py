@@ -40,7 +40,7 @@ def select_digest(sequence, rb, max_length=10000, min_length=100, max_gc=100, mi
 def enzyme_selector(sequence, restriction_interval, genome_frequency=False, deterministic_overhangs=False, rb=False):
 	"""
 	Usage Example:
-		from sequence_utils import extract_feature
+		from utils import extract_feature
 		sequence,_ = extract_feature(sequence_id="AJ627603", data_dir="/home/chymera/data2/gt.ep/sequences/", feature_names=["Cre", "cre", "CRE"])
 		outp = enzyme_selector(sequence=sequence, restriction_interval=[0,690], genome_frequency=[700,2000], deterministic_overhangs=True)
 		print outp
@@ -63,7 +63,7 @@ def enzyme_selector(sequence, restriction_interval, genome_frequency=False, dete
 				del respect_frequency[enzyme]
 			else:
 				if deterministic_overhangs:
-					from sequence_utils import overhangs
+					from utils import overhangs
 					if any(bp_ID in overhangs(enzyme) for bp_ID in ["N", "R", "Y", "!!!", "S", "W", "M", "K", "B", "D", "H", "V"]) or overhangs(enzyme) == "":
 						del respect_frequency[enzyme]
 
