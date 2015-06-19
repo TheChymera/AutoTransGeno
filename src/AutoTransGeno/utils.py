@@ -1,9 +1,14 @@
 __author__ = 'Horea Christian'
 
+from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
 from Bio.Seq import Seq
+from Bio.Alphabet import generic_dna
 from os.path import isfile
+from Bio.Alphabet import IUPAC
 import numpy as np
+import random
+import string
 
 format_extensions = {
 	"genbank": [".gbk", ".gb", ".genbank"],
@@ -30,10 +35,7 @@ def simple_sequence_merge(sequences=[]):
 						added = True
 		if not added:
 			merged_sequence += position
-
-	print [len(se) for se in sequences]
-	print sequences[0].count("N")
-	print merged_sequence.count("N"), len(merged_sequence), merged_sequence
+	return merged_sequence
 
 def check_format(sequence_path, format):
 	"""
@@ -51,11 +53,14 @@ def check_format(sequence_path, format):
 				break
 	return sequence_path
 
-def write_seq(sequence_write_path=".cache/", entrez_id="", sequence="", sequence_id="", formats=["fasta"]):
+def write_seq(sequence_write_path="/tmp/", entrez_id="", sequence="", sequence_id="", formats=["fasta"]):
 	# CAREFUL! in case of multiple exports will only return the last exported (genbank) destination!
 
 	if sequence and not sequence_id:
-		raise Exception("Please specify an ID for your sequence (whatever string you choose)")
+		ID = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
+		destination = sequence_write_path+ID+".fasta"
+		record = SeqRecord(Seq(sequence,IUPAC.ambiguous_dna), id = "Unnamed sequence, outputted by AutoTransGeno")
+		SeqIO.write(record, destination, "fasta")
 
 	if entrez_id:
 		from Bio import Entrez
@@ -69,10 +74,7 @@ def write_seq(sequence_write_path=".cache/", entrez_id="", sequence="", sequence
 			destination = sequence_write_path+entrez_id+".gbk"
 			SeqIO.write(record, destination, "genbank")
 
-	if sequence:
-		from Bio.Seq import Seq
-		from Bio.Alphabet import generic_dna
-		from Bio.SeqRecord import SeqRecord
+	if sequence and sequence_id:
 
 		if isinstance(sequence, str):
 			sequence = Seq(sequence, generic_dna)
@@ -158,10 +160,3 @@ def extract_feature(sequence_id, data_dir, feature_names, write_file=False):
 		extracted_feature_file = ""
 
 	return extracted_feature, extracted_feature_file
-
-if __name__ == '__main__':
-	ID_list = ["783476", "old_783477", "783477"]
-	base_dir = "/home/chymera/"
-	paths = [base_dir + ID + ".fasta" for ID in ID_list]
-	sequences = [SeqIO.read(one_path, "fasta") for one_path in paths]
-	outp = simple_sequence_merge(sequences=sequences)
