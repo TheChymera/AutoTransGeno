@@ -1,12 +1,39 @@
 __author__ = 'Horea Christian'
 
 from Bio import SeqIO
+from Bio.Seq import Seq
 from os.path import isfile
+import numpy as np
 
 format_extensions = {
 	"genbank": [".gbk", ".gb", ".genbank"],
 	"fasta": [".fasta"]
 }
+
+def simple_sequence_merge(sequences=[]):
+	sequences = [str(sequence.seq) for sequence in sequences]
+	sequences = sorted(sequences, key=len, reverse=True)
+	sequences_number = len(sequences)
+	sequences_index = range(sequences_number)
+	merged_sequence = ""
+	for idx, position in enumerate(sequences[0]):
+		added = False
+		if position == "N":
+			for i in sequences_index[1:]:
+				if not added:
+					try:
+						if sequences[i][idx] != "N":
+							merged_sequence += sequences[i][idx]
+							added = True
+					except IndexError:
+						merged_sequence += position
+						added = True
+		if not added:
+			merged_sequence += position
+
+	print [len(se) for se in sequences]
+	print sequences[0].count("N")
+	print merged_sequence.count("N"), len(merged_sequence), merged_sequence
 
 def check_format(sequence_path, format):
 	"""
@@ -133,5 +160,8 @@ def extract_feature(sequence_id, data_dir, feature_names, write_file=False):
 	return extracted_feature, extracted_feature_file
 
 if __name__ == '__main__':
-	# outp = find_primers(sequence_path="/home/chymera/data/CreBLseq/Cre_aj627603/preliminary_sequencing/hit_full.fasta")
-	outp = extract_feature(sequence_id="AJ627603", data_dir="/home/chymera/data/CreBLseq/Cre_aj627603/", feature_names=["cre", "CRE", "Cre"])
+	ID_list = ["783476", "old_783477", "783477"]
+	base_dir = "/home/chymera/"
+	paths = [base_dir + ID + ".fasta" for ID in ID_list]
+	sequences = [SeqIO.read(one_path, "fasta") for one_path in paths]
+	outp = simple_sequence_merge(sequences=sequences)
