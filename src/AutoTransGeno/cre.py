@@ -1,6 +1,6 @@
 __author__ = "Horea Christian"
 
-def cre(datadir, feature_name, extract_from):
+def cre(datadir, feature_name, extract_from, hit_dir=""):
 	from utils import extract_feature, check_fetch_record
 	from restriction import enzyme_selector
 	from Bio import SeqIO
@@ -15,7 +15,7 @@ def cre(datadir, feature_name, extract_from):
 		construct_name = feature_name
 
 	main_record, main_record_file = extract_feature(sequence_id=extract_from, data_dir=datadir, feature_names=feature_name, write_file=True)
-	gdd = GenomeDiagram.Diagram(construct_name+' Construct Diagram', x=0.05, track_size=0.2)
+	gdd = GenomeDiagram.Diagram(construct_name+' Construct Diagram', x=0.05, track_size=0.25)
 
 	genbank_track, genbank_features = new_track(gdd, construct_name+" features", smalltick=10)
 	for feature in main_record.features:
@@ -32,25 +32,28 @@ def cre(datadir, feature_name, extract_from):
 	restriction_track, restriction_features = new_track(gdd, construct_name+" restriction sites", smalltick=10)
 	draw_digest(restriction_features, restriction_dict)
 
+	primer_list=[
+			["cre_f1", "cre_r1", colors.orchid],
+			["cre_fw3", "cre_rv3", colors.cornflower],
+			["cre_fw5", "cre_rv5", colors.lightseagreen],
+			["cre_fw7", "cre_rv7", colors.salmon]
+		]
+
+	# plotting primers
 	primer_track, primer_features = new_track(gdd, construct_name+" primers", smalltick=10)
-	add_to_track(primer_features, datadir+"primers/"+"cre_fw2.fasta", main_record_file, annotation="cre_fw2", feature_color=colors.darkorchid, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_rv2.fasta", main_record_file, annotation="cre_rv2", feature_color=colors.darkorchid, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_fw3.fasta", main_record_file, annotation="cre_fw3", feature_color=colors.salmon, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_rv3.fasta", main_record_file, annotation="cre_rv3", feature_color=colors.salmon, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_f1.fasta", main_record_file, annotation="cre_f1", feature_color=colors.cornflower, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_r1.fasta", main_record_file, annotation="cre_r1", feature_color=colors.cornflower, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_fw4.fasta", main_record_file, annotation="cre_fw4", feature_color=colors.green, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_rv4.fasta", main_record_file, annotation="cre_rv4", feature_color=colors.green, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_fw5.fasta", main_record_file, annotation="cre_fw5", feature_color=colors.green, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_rv5.fasta", main_record_file, annotation="cre_rv5", feature_color=colors.green, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_fw6.fasta", main_record_file, annotation="cre_fw6", feature_color=colors.green, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_rv6.fasta", main_record_file, annotation="cre_rv6", feature_color=colors.green, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_fw7.fasta", main_record_file, annotation="cre_fw7", feature_color=colors.green, label_angle=60)
-	add_to_track(primer_features, datadir+"primers/"+"cre_rv7.fasta", main_record_file, annotation="cre_rv7", feature_color=colors.green, label_angle=60)
+	for primer_entry in primer_list:
+			add_to_track(primer_features, datadir+"primers/"+primer_entry[0]+".fasta", main_record_file, annotation=primer_entry[0], feature_color=primer_entry[2], label_angle=60)
+			add_to_track(primer_features, datadir+"primers/"+primer_entry[1]+".fasta", main_record_file, annotation=primer_entry[1], feature_color=primer_entry[2], label_angle=60)
+
+	for i in [0,1]:
+		hit_track_back, hit_features_back = new_track(gdd, str(783476+i), smalltick=10, end=len(SeqIO.read(hit_dir+str(783476+i)+".fasta", 'fasta')))
+		add_to_track(hit_features_back, main_record_file, hit_dir+str(783476+i)+".fasta", annotation=" "+construct_name, feature_color=colors.darkslateblue, label_angle=30, forceone=True)
+		hit_track, hit_features = new_track(gdd, construct_name+" alignment hits", smalltick=10)
+		add_to_track(hit_features, hit_dir+str(783476+i)+".fasta", main_record_file, annotation=" "+str(783476+i), feature_color=colors.darksalmon, label_angle=30)
 
 	gdd.draw(format="linear", pagesize="A4", fragments=1, start=0, end=len(main_record))
 	gdd.write("/home/chymera/src/AutoTransGeno/output/"+construct_name+"_from_"+extract_from+".pdf", "PDF")
 
 	return restriction_dict
 if __name__ == '__main__':
-	cre(datadir="/home/chymera/data/reference/sequences/", feature_name=["cre", "Cre", "CRE"], extract_from="aj627603")
+	cre(datadir="/home/chymera/data/reference/sequences/", feature_name=["cre", "Cre", "CRE"], extract_from="aj627603", hit_dir="/home/chymera/")
