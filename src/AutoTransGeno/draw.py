@@ -12,43 +12,26 @@ from Bio import SeqIO
 from Bio.Alphabet import generic_dna
 from reportlab.lib import colors
 
-def new_track(diagram, track_name, smalltick=100, largetick="", track_no=1, endpoint=0):
+def new_track(diagram, track_name, smalltick=100, largetick="", track_no=1, end=None):
 	if not largetick:
 		largetick=10*smalltick
-	if endpoint != 0:
-		construct_track = diagram.new_track(
-							track_no,
-							name=track_name,
-							greytrack=True,
-							scale=True,
-							scale_format="SInt",
-							scale_smalltick_interval=smalltick,
-							scale_largetick_interval=largetick,
-							scale_fontsize=3,
-							scale_ticks=True,
-							scale_color=colors.black,
-							scale_largeticks=0.4,
-							scale_smallticks=0.2,
-							axis_labels=True,
-							greytrack_labels=1,
-							start=0,
-							end=endpoint)
-	else:
-		construct_track = diagram.new_track(
-							track_no,
-							name=track_name,
-							greytrack=True,
-							scale=True,
-							scale_format="SInt",
-							scale_smalltick_interval=smalltick,
-							scale_largetick_interval=largetick,
-							scale_fontsize=3,
-							scale_ticks=True,
-							scale_color=colors.black,
-							scale_largeticks=0.4,
-							scale_smallticks=0.2,
-							axis_labels=True,
-							greytrack_labels=1)
+	construct_track = diagram.new_track(
+						track_no,
+						name=track_name,
+						greytrack=True,
+						scale=True,
+						scale_format="SInt",
+						scale_smalltick_interval=smalltick,
+						scale_largetick_interval=largetick,
+						scale_fontsize=3,
+						scale_ticks=True,
+						scale_color=colors.black,
+						scale_largeticks=0.4,
+						scale_smallticks=0.2,
+						axis_labels=True,
+						greytrack_labels=1,
+						start=0,
+						end=end)
 	track_features = construct_track.new_set()
 	return construct_track, track_features
 
@@ -75,8 +58,12 @@ def add_to_track(track_features, query, subject, annotation="", feature_color=""
 			else:
 				strand = +1
 			feature = SeqFeature(FeatureLocation(hsp.sbjct_start, hsp.sbjct_end), strand=strand)
+			if hsp.identities != hsp.align_length:
+				align_summary=" ("+str(hsp.identities)+"/"+str(hsp.align_length)+"/"+str(len(hsp.query))+")"
+			else:
+				align_summary=" ("+str(hsp.align_length)+"/"+str(len(SeqIO.read(query, "fasta")))+")"
 			track_features.add_feature(feature,
-				name=annotation+" ("+str(hsp.identities)+"/"+str(hsp.align_length)+")",
+				name=annotation+align_summary,
 				label=True, color=feature_color,
 				label_color=feature_color,
 				label_angle=label_angle,
