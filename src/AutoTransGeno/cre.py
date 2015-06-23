@@ -1,15 +1,17 @@
 __author__ = "Horea Christian"
 
-from os.path import splitext
+from os.path import splitext, basename
 
-def cre(datadir, feature_name, extract_from, hit_dir=""):
+def cre(datadir, feature_name, extract_from, hit_dir="", save_sequences_to=""):
 	from utils import extract_feature, check_fetch_record, write_seq, simple_sequence_merge
 	from restriction import enzyme_selector
 	from Bio import SeqIO
 	from Bio.Graphics import GenomeDiagram
 	from draw import new_track, draw_digest, add_to_track
 	from reportlab.lib import colors
-	from Bio import Restriction
+	from Bio.SeqRecord import SeqRecord
+	from Bio.Seq import Seq
+	from Bio.Alphabet import IUPAC
 
 	if feature_name is not str:
 		construct_name = feature_name[0]
@@ -47,23 +49,35 @@ def cre(datadir, feature_name, extract_from, hit_dir=""):
 	seq_paths = [base_dir + ID + ".fasta" for ID in ID_list]
 	sequences = [SeqIO.read(one_path, "fasta") for one_path in seq_paths]
 	outp = simple_sequence_merge(sequences=sequences)
-	seq_meld = write_seq(sequence=outp)
+	seq_meld = write_seq(sequence=outp,sequence_write_path=save_sequences_to, ID="meld_"+"+".join(ID_list))
 
 	# plotting primers
 	primer_track, primer_features = new_track(gdd, construct_name+" primers", smalltick=10)
 	for primer_entry in primer_list:
-			add_to_track(primer_features, datadir+"primers/"+primer_entry[0]+".fasta", main_record_file, annotation=primer_entry[0], feature_color=primer_entry[2], label_angle=60)
-			add_to_track(primer_features, datadir+"primers/"+primer_entry[1]+".fasta", main_record_file, annotation=primer_entry[1], feature_color=primer_entry[2], label_angle=60)
+		add_to_track(primer_features, datadir+"primers/"+primer_entry[0]+".fasta", main_record_file, annotation=primer_entry[0], feature_color=primer_entry[2], label_angle=60)
+		add_to_track(primer_features, datadir+"primers/"+primer_entry[1]+".fasta", main_record_file, annotation=primer_entry[1], feature_color=primer_entry[2], label_angle=60)
 
+	# the order here is important, ebcause the last sequence of the list will be used to create the extended construct
 	for i in [hit_dir+"783476.fasta",hit_dir+"783477.fasta", seq_meld]:
 		hit_track_back, hit_features_back = new_track(gdd, splitext(i)[0][-6:], smalltick=10, end=len(SeqIO.read(i, 'fasta')))
 		add_to_track(hit_features_back, main_record_file, i, annotation=" "+construct_name, feature_color=colors.darkslateblue, label_angle=30, forceone=True)
 		hit_track, hit_features = new_track(gdd, construct_name+" alignment hits", smalltick=10)
-		add_to_track(hit_features, i, main_record_file, annotation=" "+splitext(i)[0][-6:], feature_color=colors.darksalmon, label_angle=30)
+		hsp_list = add_to_track(hit_features, i, main_record_file, annotation=" "+splitext(i)[0][-6:], feature_color=colors.darksalmon, label_angle=30, forceone=True)
+
+		record = SeqIO.read(i, "fasta")
+		#for loop only takes the first alignment, then breaks
+		for hsp in hsp_list:
+			truncated_record = SeqRecord(record.seq[hsp.query_end:], id = "Region downstream of Cre in ePet-cre mice, i="+i)
+			write_seq(sequence_write_path=save_sequences_to, record=truncated_record, ID=splitext(basename(i))[0]+"_3-unmatched")
+			break
+
+	record = SeqRecord(main_record.seq+record.seq[hsp.query_end:], id = "Cre and following bases in ePet-cre construct.")
+	write_seq(sequence_write_path=save_sequences_to, record=record, ID="cre-ff-current")
+
 
 	gdd.draw(format="linear", pagesize="A4", fragments=1, start=0, end=len(main_record))
-	gdd.write("/home/chymera/src/AutoTransGeno/output/"+construct_name+"_from_"+extract_from+".pdf", "PDF")
+	gdd.write("/home/chymera/data/gt.ep/reports/"+construct_name+"_from_"+extract_from+".pdf", "PDF")
 
 	return restriction_dict
 if __name__ == '__main__':
-	cre(datadir="/home/chymera/data/reference/sequences/", feature_name=["cre", "Cre", "CRE"], extract_from="aj627603", hit_dir="/home/chymera/")
+	cre(datadir="/home/chymera/data/reference/sequences/", feature_name=["cre", "Cre", "CRE"], extract_from="aj627603", hit_dir="/home/chymera/", save_sequences_to="/home/chymera/data/gt.ep/fasta/")
