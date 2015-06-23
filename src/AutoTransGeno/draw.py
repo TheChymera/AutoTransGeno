@@ -69,6 +69,7 @@ def add_to_track(track_features, query, subject, annotation="", feature_color=""
 				label_angle=label_angle,
 				sigil=sigil,
 				arrowshaft_height=1)
+	return hsp_list
 
 def draw_digest(track_features, restriction_dict, restriction_colors="", rotate_labels=False):
 	from itertools import cycle
