@@ -1,5 +1,6 @@
 __author__ = 'Horea Christian'
 
+from Bio.Restriction import *
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -53,13 +54,19 @@ def check_format(sequence_path, format):
 				break
 	return sequence_path
 
-def write_seq(sequence_write_path="/tmp/", entrez_id="", sequence="", sequence_id="", formats=["fasta"]):
+def write_seq(sequence_write_path="/tmp/", entrez_id="", sequence="", sequence_id="", record="", formats=["fasta"], ID=""):
 	# CAREFUL! in case of multiple exports will only return the last exported (genbank) destination!
 
-	if sequence and not sequence_id:
+	if not ID:
 		ID = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
+
+	if sequence and not sequence_id:
 		destination = sequence_write_path+ID+".fasta"
 		record = SeqRecord(Seq(sequence,IUPAC.ambiguous_dna), id = "Unnamed sequence, outputted by AutoTransGeno")
+		SeqIO.write(record, destination, "fasta")
+
+	if record:
+		destination = sequence_write_path+ID+".fasta"
 		SeqIO.write(record, destination, "fasta")
 
 	if entrez_id:
@@ -115,7 +122,6 @@ def check_fetch_record(data_dir, construct_name, formats=["genbank"]):
 	return main_record_file
 
 def overhangs(enzyme):
-	from Bio.Restriction import *
 
 	if "?" in enzyme.elucidate() or "cut twice, not yet implemented sorry" in enzyme.elucidate():
 		return("!!!NON-FATAL ERROR: UNDETERMINED OVERHANGS")
