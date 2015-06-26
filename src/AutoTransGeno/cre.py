@@ -1,24 +1,27 @@
 __author__ = "Horea Christian"
 
 from os.path import splitext, basename
+from utils import extract_feature, check_fetch_record, write_seq, simple_sequence_merge
+from restriction import enzyme_selector
+from Bio import SeqIO
+from Bio.Graphics import GenomeDiagram
+from draw import new_track, draw_digest, add_to_track
+from reportlab.lib import colors
+from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
+from Bio.Alphabet import IUPAC
 
-def cre(datadir, feature_name, extract_from, hit_dir="", save_sequences_to=""):
-	from utils import extract_feature, check_fetch_record, write_seq, simple_sequence_merge
-	from restriction import enzyme_selector
-	from Bio import SeqIO
-	from Bio.Graphics import GenomeDiagram
-	from draw import new_track, draw_digest, add_to_track
-	from reportlab.lib import colors
-	from Bio.SeqRecord import SeqRecord
-	from Bio.Seq import Seq
-	from Bio.Alphabet import IUPAC
+primer_colors=[colors.orchid, colors.cornflower, colors.lightseagreen, colors.salmon]
+
+def cre(data_dir, feature_name, extract_from, save_sequences_to="", align_with=[]):
 
 	if feature_name is not str:
 		construct_name = feature_name[0]
 	else:
 		construct_name = feature_name
 
-	main_record, main_record_file = extract_feature(sequence_id=extract_from, data_dir=datadir, feature_names=feature_name, write_file=True)
+	main_record, main_record_file = extract_feature(sequence_id=extract_from, data_dir=data_dir, feature_names=feature_name, write_file=True)
+
 	gdd = GenomeDiagram.Diagram(construct_name+' Construct Diagram', x=0.05, track_size=0.25)
 
 	genbank_track, genbank_features = new_track(gdd, construct_name+" features", smalltick=10)
@@ -43,22 +46,15 @@ def cre(datadir, feature_name, extract_from, hit_dir="", save_sequences_to=""):
 			["cre_fw7", "cre_rv7", colors.salmon]
 		]
 
-	# creating sequencing meld
-	ID_list = ["783476", "old_783477", "783477"]
-	base_dir = "/home/chymera/"
-	seq_paths = [base_dir + ID + ".fasta" for ID in ID_list]
-	sequences = [SeqIO.read(one_path, "fasta") for one_path in seq_paths]
-	outp = simple_sequence_merge(sequences=sequences)
-	seq_meld = write_seq(sequence=outp,sequence_write_path=save_sequences_to, ID="meld_"+"+".join(ID_list))
-
 	# plotting primers
 	primer_track, primer_features = new_track(gdd, construct_name+" primers", smalltick=10)
 	for primer_entry in primer_list:
-		add_to_track(primer_features, datadir+"primers/"+primer_entry[0]+".fasta", main_record_file, annotation=primer_entry[0], feature_color=primer_entry[2], label_angle=60)
-		add_to_track(primer_features, datadir+"primers/"+primer_entry[1]+".fasta", main_record_file, annotation=primer_entry[1], feature_color=primer_entry[2], label_angle=60)
+		add_to_track(primer_features, data_dir+"primers/"+primer_entry[0]+".fasta", main_record_file, annotation=primer_entry[0], feature_color=primer_entry[2], label_angle=60)
+		add_to_track(primer_features, data_dir+"primers/"+primer_entry[1]+".fasta", main_record_file, annotation=primer_entry[1], feature_color=primer_entry[2], label_angle=60)
 
-	# the order here is important, ebcause the last sequence of the list will be used to create the extended construct
-	for i in [hit_dir+"783476.fasta",hit_dir+"783477.fasta", seq_meld]:
+	# turn entry names into actual file paths
+	align_with=[save_sequences_to+entry+".fasta" for entry in align_with]
+	for i in align_with:
 		hit_track_back, hit_features_back = new_track(gdd, splitext(i)[0][-6:], smalltick=10, end=len(SeqIO.read(i, 'fasta')))
 		add_to_track(hit_features_back, main_record_file, i, annotation=" "+construct_name, feature_color=colors.darkslateblue, label_angle=30, forceone=True)
 		hit_track, hit_features = new_track(gdd, construct_name+" alignment hits", smalltick=10)
@@ -76,8 +72,17 @@ def cre(datadir, feature_name, extract_from, hit_dir="", save_sequences_to=""):
 
 
 	gdd.draw(format="linear", pagesize="A4", fragments=1, start=0, end=len(main_record))
-	gdd.write("/home/chymera/data/gt.ep/reports/"+construct_name+"_from_"+extract_from+".pdf", "PDF")
+	gdd.write("/home/chymera/src/AutoTransGeno/output/"+construct_name+"_from_"+extract_from+".pdf", "PDF")
 
 	return restriction_dict
+
+def meld_sequences(ID_list = ["783476", "old_783477", "783477"], base_dir = "/home/chymera/", save_sequences_to=""):
+	# creating sequencing meld
+	seq_paths = [base_dir + ID + ".fasta" for ID in ID_list]
+	sequences = [SeqIO.read(one_path, "fasta") for one_path in seq_paths]
+	outp = simple_sequence_merge(sequences=sequences)
+	seq_meld = write_seq(sequence=outp,sequence_write_path=save_sequences_to, ID="meld_"+"+".join(ID_list))
+	return seq_meld
+
 if __name__ == '__main__':
-	cre(datadir="/home/chymera/data/reference/sequences/", feature_name=["cre", "Cre", "CRE"], extract_from="aj627603", hit_dir="/home/chymera/", save_sequences_to="/home/chymera/data/gt.ep/fasta/")
+	cre(data_dir="/home/chymera/data/reference/sequences/", feature_name=["cre"], extract_from="aj627603", save_sequences_to="/home/chymera/data/gt.ep/fasta/", align_with=["783476","783477"])
