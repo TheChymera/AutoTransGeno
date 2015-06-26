@@ -54,20 +54,30 @@ def check_format(sequence_path, format):
 				break
 	return sequence_path
 
-def write_seq(sequence_write_path="/tmp/", entrez_id="", sequence="", sequence_id="", record="", formats=["fasta"], ID=""):
+def write_seq(sequence_write_path="/tmp/", entrez_id="", sequence="", ID="", record="", formats=["fasta"]):
 	# CAREFUL! in case of multiple exports will only return the last exported (genbank) destination!
 
+	# giving the sequence a random ID if not otherwise set
 	if not ID:
 		ID = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
 
-	if sequence and not sequence_id:
-		destination = sequence_write_path+ID+".fasta"
-		record = SeqRecord(Seq(sequence,IUPAC.ambiguous_dna), id = "Unnamed sequence, outputted by AutoTransGeno")
-		SeqIO.write(record, destination, "fasta")
+	if sequence:
+		if "fasta" in formats:
+			destination = sequence_write_path+ID+".fasta"
+			record = SeqRecord(Seq(sequence,IUPAC.ambiguous_dna), id="Unnamed sequence, outputted by AutoTransGeno")
+			SeqIO.write(record, destination, "fasta")
+		if "genbank" in formats:
+			destination = sequence_write_path+ID+".gbk"
+			record = SeqRecord(Seq(sequence,IUPAC.ambiguous_dna), id="Unnamed sequence, outputted by AutoTransGeno")
+			SeqIO.write(record, destination, "genbank")
 
 	if record:
-		destination = sequence_write_path+ID+".fasta"
-		SeqIO.write(record, destination, "fasta")
+		if "fasta" in formats:
+			destination = sequence_write_path+ID+".fasta"
+			SeqIO.write(record, destination, "fasta")
+		if "genbank" in formats:
+			destination = sequence_write_path+ID+".gbk"
+			SeqIO.write(record, destination, "genbank")
 
 	if entrez_id:
 		from Bio import Entrez
@@ -79,21 +89,6 @@ def write_seq(sequence_write_path="/tmp/", entrez_id="", sequence="", sequence_i
 			SeqIO.write(record, destination, "fasta")
 		if "genbank" in formats:
 			destination = sequence_write_path+entrez_id+".gbk"
-			SeqIO.write(record, destination, "genbank")
-
-	if sequence and sequence_id:
-
-		if isinstance(sequence, str):
-			sequence = Seq(sequence, generic_dna)
-		record=sequence
-		#
-		# record=SeqRecord(sequence, id=sequence_id)
-		# print record, type(record)
-		if "fasta" in formats:
-			destination = sequence_write_path+sequence_id+".fasta"
-			SeqIO.write(record, destination, "fasta")
-		if "genbank" in formats:
-			destination = sequence_write_path+sequence_id+".gb"
 			SeqIO.write(record, destination, "genbank")
 
 	return destination
@@ -118,7 +113,7 @@ def check_fetch_record(data_dir, construct_name, formats=["genbank"]):
 		main_record_file = data_dir+construct_name+".gbk"
 
 		if not isfile(main_record_file):
-			write_seq(sequence_write_path=data_dir, entrez_id=construct_name, formats=["genbank"])
+			main_record_file = write_seq(sequence_write_path=data_dir, entrez_id=construct_name, formats=["genbank"])
 	return main_record_file
 
 def overhangs(enzyme):
@@ -146,7 +141,7 @@ def standard_template(template):
 def extract_feature(sequence_id, data_dir, feature_names, write_file=False):
 	# CAREFUL! only returns last detected sequence!
 
-	sequence_path = check_fetch_record(data_dir, sequence_id, formats=["genbank"])
+	sequence_path = check_fetch_record(data_dir+"/genbank/", sequence_id, formats=["genbank"])
 	main_record = SeqIO.read(sequence_path, 'gb')
 
 	for feature in main_record.features:
@@ -161,7 +156,7 @@ def extract_feature(sequence_id, data_dir, feature_names, write_file=False):
 			extracted_feature = feature.extract(main_record)
 
 	if write_file:
-		extracted_feature_file = write_seq(sequence_write_path=data_dir, sequence=extracted_feature, sequence_id=feature_names[0])
+		extracted_feature_file = write_seq(sequence_write_path=data_dir, record=extracted_feature, ID=feature_names[0]+"_from_"+sequence_id)
 	else:
 		extracted_feature_file = ""
 
