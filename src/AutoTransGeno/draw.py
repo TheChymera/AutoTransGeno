@@ -12,7 +12,7 @@ from Bio import SeqIO
 from Bio.Alphabet import generic_dna
 from reportlab.lib import colors
 
-def new_track(diagram, track_name, smalltick=100, largetick="", track_no=1, end=None):
+def new_track(diagram, track_name, smalltick=100, largetick="", track_no=1, scale_fontsize=3, end=None, greytrack_fontsize=7, scale_ticks=True):
 	if not largetick:
 		largetick=10*smalltick
 	construct_track = diagram.new_track(
@@ -23,19 +23,20 @@ def new_track(diagram, track_name, smalltick=100, largetick="", track_no=1, end=
 						scale_format="SInt",
 						scale_smalltick_interval=smalltick,
 						scale_largetick_interval=largetick,
-						scale_fontsize=3,
-						scale_ticks=True,
+						scale_fontsize=scale_fontsize,
+						scale_ticks=scale_ticks,
 						scale_color=colors.black,
 						scale_largeticks=0.4,
 						scale_smallticks=0.2,
 						axis_labels=True,
 						greytrack_labels=1,
+						greytrack_fontsize=greytrack_fontsize,
 						start=0,
 						end=end)
 	track_features = construct_track.new_set()
 	return construct_track, track_features
 
-def add_to_track(track_features, query, subject, annotation="", feature_color="", forceone=False, sigil="ARROW", label_angle=0):
+def add_to_track(track_features, query, subject, annotation="", feature_color="", forceone=False, sigil="ARROW", label_angle=0, label_size=2):
 	from Bio.Blast.Applications import NcbiblastnCommandline
 	from utils import check_format
 
@@ -64,7 +65,9 @@ def add_to_track(track_features, query, subject, annotation="", feature_color=""
 				align_summary=" ("+str(hsp.align_length)+"/"+str(len(SeqIO.read(query, "fasta")))+")"
 			track_features.add_feature(feature,
 				name=annotation+align_summary,
-				label=True, color=feature_color,
+				label=True,
+				color=feature_color,
+				label_size = label_size,
 				label_color=feature_color,
 				label_angle=label_angle,
 				sigil=sigil,
@@ -76,7 +79,10 @@ def draw_digest(track_features, restriction_dict, restriction_colors="", rotate_
 	from utils import overhangs
 
 	#the labels are too close to the track to properly display multiple rotated instances pointing at the same position, this gets prepended:
-	name_spacer="      "
+	if rotate_labels:
+		name_spacer="      "
+	else:
+		name_spacer=" "
 
 	if not restriction_colors:
 		restriction_colors=[
