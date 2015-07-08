@@ -1,8 +1,9 @@
 __author__ = 'Horea Christian'
 
 from Bio.Restriction import *
+from Bio.pairwise2 import format_alignment
 from Bio.SeqRecord import SeqRecord
-from Bio import SeqIO
+from Bio import SeqIO, pairwise2
 from Bio.Seq import Seq
 from Bio.Alphabet import generic_dna
 from os.path import isfile
@@ -11,32 +12,56 @@ import numpy as np
 import random
 import string
 
+
 format_extensions = {
 	"genbank": [".gbk", ".gb", ".genbank"],
 	"fasta": [".fasta"]
 }
 
 def simple_sequence_merge(sequences=[]):
-	sequences = [str(sequence.seq) for sequence in sequences]
+
+	#make sure this works with string and sequence object inputs:
+	if isinstance(sequences[0], str):
+		pass
+	else:
+		sequences = [str(sequence.seq) for sequence in sequences]
+
 	sequences = sorted(sequences, key=len, reverse=True)
 	sequences_number = len(sequences)
 	sequences_index = range(sequences_number)
 	merged_sequence = ""
 	for idx, position in enumerate(sequences[0]):
 		added = False
-		if position == "N":
-			for i in sequences_index[1:]:
-				if not added:
-					try:
-						if sequences[i][idx] != "N":
-							merged_sequence += sequences[i][idx]
-							added = True
-					except IndexError:
-						merged_sequence += position
-						added = True
+		# if position in ["N","-"]:
+		# 	for i in sequences_index[1:]:
+		# 		if not added:
+		# 			try:
+		# 				if sequences[i][idx] not in ["N","-"]:
+		# 					merged_sequence += sequences[i][idx]
+		# 					added = True
+		# 			except IndexError:
+		# 				merged_sequence += position
+		# 				added = True
+		for character in ["-", "N"]:
+			merged_sequence, added = check_position(position, character, merged_sequence, idx, sequences_index, sequences)
+			if added:
+				break
 		if not added:
 			merged_sequence += position
+
 	return merged_sequence
+
+def check_position(position, character, merged_sequence, idx, sequences_index, sequences, added=False):
+	if position == character:
+		for i in sequences_index[1:]:
+			try:
+				if sequences[i][idx] != character:
+					merged_sequence += sequences[i][idx]
+					added = True
+			except IndexError:
+				merged_sequence += position
+				added = True
+	return merged_sequence, added
 
 def check_format(sequence_path, format):
 	"""
@@ -137,6 +162,24 @@ def standard_template(template):
 	else:
 		raise Exception("Pleae check your specified `template` value.")
 	return template
+
+def concatenate_overlapping_sequences(sequence1, sequence2):
+	# add high penalties for opening gaps (we want no more than two, and low penalties for extending them - they should both be long)
+	# e.g:
+	#ATGATAGATAGCCAGATA------------------
+	#||||||||||||||||||||||||||||||||||||
+	#--------------GATATAACGTTANATTAWSCAT
+
+	alignment=pairwise2.align.globalms(sequence1, sequence2, 2, -4, -9, 0)
+
+	# if len(alignment) > 1:
+		# raise Exception("There are multiple global alignment variants for your sequences. This should not happen and indicates that there is a flaw in our algorithm. Contact h.chr@mai.ru")
+
+	for a in alignment:
+		aligned_sequences = list(a)[:2]
+	print aligned_sequences
+	concatenated_sequences = simple_sequence_merge(aligned_sequences)
+	print "  "+concatenated_sequences
 
 def extract_feature(sequence_id, data_dir, feature_names, write_file=False):
 	# CAREFUL! only returns last detected sequence!
