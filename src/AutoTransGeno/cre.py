@@ -13,7 +13,7 @@ from Bio.Alphabet import IUPAC
 from itertools import cycle
 
 
-def cre(data_dir, feature_name, extract_from, save_sequences_to="", align_with=[], primer_list=[], restriction_interval=[], rb=[], write=False, pagesize="A4", scale_fontsize=3, label_size=2, greytrack_fontsize=7, x=0.05, y=0.01, track_size=0.3):
+def cre(data_dir, feature_name, extract_from="", base_sequence="", save_sequences_to="", align_with=[], primer_list=[], restriction_interval=[], rb=[], write=False, pagesize="A4", scale_fontsize=3, label_size=2, greytrack_fontsize=7, x=0.05, y=0.01, track_size=0.3):
 
 	#define color palettes:
 	primer_colors=[colors.orchid, colors.cornflower, colors.lightseagreen, colors.salmon]
@@ -23,7 +23,15 @@ def cre(data_dir, feature_name, extract_from, save_sequences_to="", align_with=[
 	else:
 		construct_name = feature_name
 
-	main_record, main_record_file = extract_feature(sequence_id=extract_from, data_dir=data_dir, feature_names=feature_name, write_file=True)
+	if extract_from:
+		main_record, main_record_file = extract_feature(sequence_id=extract_from, data_dir=data_dir, feature_names=feature_name, write_file=True)
+	elif base_sequence:
+		main_record_file = base_sequence
+		extract_from = splitext(basename(main_record_file))[0]
+		if splitext(basename(main_record_file))[1] == ".fasta":
+			main_record = SeqIO.read(main_record_file, "fasta")
+		elif splitext(basename(main_record_file))[1] in [".gb", ".gbk", ".genbank"]:
+			main_record = SeqIO.read(main_record_file, "gb")
 
 	gdd = GenomeDiagram.Diagram(construct_name+' Construct Diagram', x=x, y=y, track_size=track_size)
 
@@ -71,11 +79,10 @@ def cre(data_dir, feature_name, extract_from, save_sequences_to="", align_with=[
 		record = SeqRecord(main_record.seq+record.seq[hsp.query_end:], id = "Cre and following bases in ePet-cre construct.")
 		write_seq(sequence_write_path=save_sequences_to, record=record, ID="cre-ff-current")
 
-
 	gdd.draw(format="linear", pagesize=pagesize, fragments=1, start=0, end=len(main_record))
 	if write:
 		gdd.write("/home/chymera/src/AutoTransGeno/output/"+construct_name+"_from_"+extract_from+".pdf", "PDF")
-
+		print "/home/chymera/src/AutoTransGeno/output/"+construct_name+"_from_"+extract_from+".pdf"
 	return gdd
 
 def meld_sequences(ID_list = ["783476", "old_783477", "783477"], base_dir = "/home/chymera/", save_sequences_to=""):
@@ -86,6 +93,9 @@ def meld_sequences(ID_list = ["783476", "old_783477", "783477"], base_dir = "/ho
 	seq_meld = write_seq(sequence=outp,sequence_write_path=save_sequences_to, ID="meld_"+"+".join(ID_list))
 	return seq_meld
 
+# def extend_sequence(base_sequence, new_sequence, new_features):
+
+
 if __name__ == '__main__':
 	primer_list=[
 			["cre_f1", "cre_r1", colors.orchid],
@@ -93,4 +103,5 @@ if __name__ == '__main__':
 			["cre_fw5", "cre_rv5", colors.lightseagreen],
 			["cre_fw7", "cre_rv7", colors.salmon]
 		]
-	cre(data_dir="/home/chymera/data/reference/sequences/", feature_name=["cre"], extract_from="aj627603", save_sequences_to="/home/chymera/data/gt.ep/fasta/", align_with=["783476","783477"], primer_list=primer_list, rb=["XceI", "PsuI"], restriction_interval=[0,690])
+	# cre(data_dir="/home/chymera/data/reference/sequences/", feature_name=["cre"], extract_from="aj627603", save_sequences_to="/home/chymera/data/gt.ep/fasta/", align_with=["783476","783477"], primer_list=primer_list, rb=["XceI", "PsuI"], restriction_interval=[0,690])
+	cre(data_dir="/home/chymera/data/reference/sequences/", feature_name=["cre"], base_sequence="/home/chymera/data/gt.ep/genbank/AY056050.gb", save_sequences_to="/home/chymera/data/gt.ep/fasta/", align_with=["783476","783477"], primer_list=primer_list, rb=["XceI", "PsuI"], restriction_interval=[0,690], write=True)
