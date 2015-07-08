@@ -32,16 +32,6 @@ def simple_sequence_merge(sequences=[]):
 	merged_sequence = ""
 	for idx, position in enumerate(sequences[0]):
 		added = False
-		# if position in ["N","-"]:
-		# 	for i in sequences_index[1:]:
-		# 		if not added:
-		# 			try:
-		# 				if sequences[i][idx] not in ["N","-"]:
-		# 					merged_sequence += sequences[i][idx]
-		# 					added = True
-		# 			except IndexError:
-		# 				merged_sequence += position
-		# 				added = True
 		for character in ["-", "N"]:
 			merged_sequence, added = check_position(position, character, merged_sequence, idx, sequences_index, sequences)
 			if added:
