@@ -48,6 +48,9 @@ def add_to_track(track_features, query, subject, annotation="", feature_color=""
 		output = NcbiblastnCommandline(query=query, subject=subject, outfmt=5, task="blastn")()[0]
 	blast_result_record = NCBIXML.read(StringIO(output))
 
+	if blast_result_record.alignments == []:
+		raise Exception("No alignments found.")
+
 	for alignment in blast_result_record.alignments:
 		if forceone:
 			hsp_list=alignment.hsps[:1]
