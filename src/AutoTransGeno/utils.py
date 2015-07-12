@@ -122,7 +122,6 @@ def convert_seq(file_path, from_format, to_format):
 	SeqIO.write(record, new_file_path, to_format)
 	return new_file_path
 
-
 def check_fetch_record(data_dir, construct_name, formats=["genbank"]):
 	if "genbank" in formats:
 		main_record_file = data_dir+construct_name+".gbk"
@@ -160,16 +159,23 @@ def concatenate_overlapping_sequences(sequence1, sequence2):
 	#||||||||||||||||||||||||||||||||||||
 	#--------------GATATAACGTTANATTAWSCAT
 
-	alignment=pairwise2.align.globalms(sequence1, sequence2, 2, -4, -9, 0)
+	alignment=pairwise2.align.globalms(sequence1, sequence2, 1, -4, -90, 0)
 
 	# if len(alignment) > 1:
 		# raise Exception("There are multiple global alignment variants for your sequences. This should not happen and indicates that there is a flaw in our algorithm. Contact h.chr@mai.ru")
 
 	for a in alignment:
 		aligned_sequences = list(a)[:2]
-	print aligned_sequences
+
+	initial_gap_length = 0
+	for a,b in zip(*aligned_sequences):
+		if a == "-":
+			initial_gap_length += 1
+		else:
+			break
+	aligned_sequences = [i[initial_gap_length:] for i in aligned_sequences]
 	concatenated_sequences = simple_sequence_merge(aligned_sequences)
-	print "  "+concatenated_sequences
+	return concatenated_sequences
 
 def extract_feature(sequence_id, data_dir, feature_names, write_file=False):
 	# CAREFUL! only returns last detected sequence!
