@@ -16,7 +16,7 @@ assembly_subdir = "Primary_Assembly/assembled_chromosomes/FASTA/"
 
 sequence_path = genbank_local_dir + seqence_subdir + assembly_subdir
 
-def mock_pcr(template, primer_files="", primer_seqs="", primer_directory="", max_length=3000, evalue=0.1):
+def mock_pcr(template, primer_files=[], primer_seqs="", primer_directory="", max_length=3000, evalue=0.1):
 	"""
 	Performs a rudimentary in-silico PCR, which returns the sequence and length of template fragments flanked by primers shother than max_length.
 	"""
@@ -28,10 +28,8 @@ def mock_pcr(template, primer_files="", primer_seqs="", primer_directory="", max
 	#converts files from whatever format they have into FASTA (required for ncbi blast)
 	if primer_files:
 		for ix, primer_file in enumerate(primer_files):
-			new_primer_file = check_format(subject, "fasta")
+			new_primer_file = check_format(primer_directory+primer_file, "fasta")
 			primer_files[ix] = new_primer_file
-	else:
-		primer_files=[]
 
 	#convert template format if necessary, if template not formatte a path write chached file for seuence
 	template = standard_template(template)
@@ -71,14 +69,14 @@ def mock_pcr(template, primer_files="", primer_seqs="", primer_directory="", max
 
 
 def mock_pcr_star(a_b_c_d_e):
-    """Convert `mock_pcr([1,2,3,4,5,6])` to `mock_pcr(1,2,3,4,5,6)` call."""
-    return mock_pcr(*a_b_c_d_e)
+	"""Convert `mock_pcr([1,2,3,4,5,6])` to `mock_pcr(1,2,3,4,5,6)` call."""
+	return mock_pcr(*a_b_c_d_e)
 
 def genome_mock_pcr(genome_path, unspecific_insert=False, primer_files="", primer_seqs="", primer_directory="", max_length=3000, evalue=0.1, poolsize=8):
 	from multiprocessing.dummy import Pool as ThreadPool
 	pool = ThreadPool(poolsize)
 
-	fasta_files = [genome_path+fasta_file for fasta_file in os.listdir(genome_path) if os.path.splitext(fasta_file)[-1] == ".fa"]
+	fasta_files = [genome_path+fasta_file for fasta_file in os.listdir(genome_path) if os.path.splitext(fasta_file)[-1] in [".fa",".fna","fasta"]]
 
 	# for i in (zip(fasta_files,
 	# 	itertools.repeat(primer_files),
